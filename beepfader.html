@@ -1,0 +1,930 @@
+<!--
+Copyright (c) 2018
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>Beepbox Song Melder</title>
+	</head>
+	<style>
+	.button {
+		background-color: #36af6b;
+		border-radius: 5px;
+		border:none;
+		color: white;
+		padding: 5px 5px;
+		text-align: center;
+		text-decoration: none;
+		display: inline-block;
+		font-size: 16px;
+		margin: 4px 2px;
+		cursor: pointer;
+	}
+	.button:disabled {
+		background-color: #19352e;
+		border-radius: 5px;
+		border:none;
+		color: #a0a0a0;
+		padding: 5px 5px;
+		text-align: center;
+		text-decoration: none;
+		display: inline-block;
+		font-size: 16px;
+		margin: 4px 2px;
+		cursor: pointer;
+	}
+	.button:hover:enabled {
+		background-color: #4dd15c;
+		border-radius: 5px;
+		border:none;
+		color: white;
+		padding: 5px 5px;
+		text-align: center;
+		text-decoration: none;
+		display: inline-block;
+		font-size: 16px;
+		margin: 4px 2px;
+		cursor: pointer;
+	}
+	
+	.hr {
+		display: block;
+		border-color: #36af6b;
+		width: 77%;
+		height: 2px;
+		
+	}
+	
+	.slidecontainer {
+		width: 100%;
+	}
+
+	.slider {
+		-webkit-appearance: none;
+		height: 6px;
+		background: #d3d3d3;
+		outline: none;
+	}
+	
+	.slider::-webkit-slider-thumb {
+		-webkit-appearance: none;
+		appearance: none;
+		width: 12px;
+		height: 20px;
+		background: #36af6b;
+		cursor: pointer;
+	}
+	
+	.slider::-moz-range-thumb {
+		width: 25px;
+		height: 25px;
+		background: #36af6b;
+		cursor: pointer;
+	}
+
+	</style>
+	<body bgcolor="#000000" text="white">
+		<h1 align="center">Beepbox Song Melder</h1>
+		<div id="PlayerContainer" align="center">
+			<button id="PlayButton" class="button" onclick='playSong()' style='width:100px; padding-left:20px; padding-right:20px; padding-top:10px; padding-bottom:10px'>Play</button>
+			<button id="ToStartButton" class="button" onclick='resetSong()' style='margin-left:20px; padding:10px'><<</button>
+			<button id="BackOneButton" class="button" onclick='backPattern()' style='padding:10px'><</button>
+			<text style='width:30px; padding-left:10px; padding-right:5px' align="center">Bar:</text>
+			<text id="CurrentBarIndicator" style="padding-right:10px">0</text>
+			<button id="ForwardOneButton" class="button" onclick='forwardPattern()' style='padding:10px'>></button>
+			<input checked type="checkbox" onclick="handleSyncChange()" id="SyncCheckBox" style="margin-left:20px">Sync</input>
+			<text style='width:30px; padding-left:20px; padding-right:5px' align="center">Fade Speed:</text>
+			<input type="range" class="slider" id="FadeSpeedSlider" onchange="updateURL()" min="4" max="16" step="1" value="8"/>
+		</div>
+		<br><hr class="hr"><br>
+		<div id="PartChooserContainer" align="center">
+			<div align="center"; style="color:gray; display:inline-block; width:1.5em; height:1.5em">#</div>
+			<div align="center"; style="color:gray; display:inline-block; width:200px">Part Name</div>
+			<div align="center"; style="color:gray; display:inline-block; width:180px">Volume</div>
+			<div align="center"; style="color:gray; display:inline-block; width:200px">Panning</div>
+			<div align="left"; style="color:gray; display:inline-block; width:348px">  Options</div>
+			<text id="partChooser" align="center" style="display:inline-block clear:both line-height:27px"/>
+			<text style="clear:both"/>
+		</div>
+		<br><hr class="hr"><br>
+		<div id="LoaderContainer" align="center">
+			<font color="gray">Beepbox link for part to add:</text>
+			<br><br>
+			<input style="color:white; background-color:black; border-color:#36af6b; border-style:solid" id="SongLinkBox" oninput="songLinkCheck(this)" size="50"/>
+			<button id="AddButton" disabled class="button" style='padding:5px' onclick='addPart()'>Add Part</button>
+		</div>
+		<br><br><br>
+		<br><br><br>
+		<h2 align="center" style="color:gray">About</h2>
+		<div align="center" style="margin:0 auto; color:gray; clear:both; max-width:600px">
+		<p>This tool is intended for use in supplement to songs created on <a href="https://www.beepbox.co/">beepbox.co</a>, by John Nesky.</p>
+		<p>You can play multiple songs simultaneously with this tool, or fade between songs.</p>
+		<p>Created by jummbus. MIT license.</p>
+		<br>
+		<h2 align="center" style="color:gray">Getting Started</h2>
+		<p>Paste a song link into the upper box and click 'Add Part'. Your part will appear in a list, and from there you can click 'Play' and use the song navigation arrows to listen to your part.</p>
+		<p>Add more parts as you see fit, and adjust their names and volume when needed. When your configuration is ready to share, copy the link in the address bar to share with others.
+		<p>The 'Sync' option forces playing songs to synchronize their playheads. Obviously, this only makes sense for songs with identical tempo and song structure, but it is useful for such songs. Uncheck the sync button if you don't need this behavior.</p>
+		<p>Note that this site places no limit on the number of channels you can try to load. Audio processing side effects may occur with as few as two songs playing, and they may become more noticeable with more. So... use this at your own peril!
+		<br><br><br>
+		<div align="center">
+		<button id="ResetAllButton" class="button" onclick='resetEverything()' style='display:inline-block; padding:10px'>Reset Page</button>
+		</div>
+		<br><br><br>
+		<div align="right">v0.2</div>
+		</text>
+		
+	
+		<script type="text/javascript" src="beepbox_synth.js"></script>
+		<script type="text/javascript">
+			
+			// Load existing config, if any.
+			window.onload = loadConfig;
+			
+			var playing = 0;
+			var synthParts = [];
+			var synthLinks = [];
+			var panValues = [];
+			var panList = [];
+			var numParts = 0;
+			var masterParts = null;
+			var fadeController = null;
+			var fadeTimer = 0;
+			var fadePart = null;
+			var fadeVolumeStarts = [];
+			
+			const syncCheckBox = document.getElementById('SyncCheckBox');
+			const barIndicator = document.getElementById('CurrentBarIndicator');
+			const partChooser = document.getElementById('partChooser');
+			const fadeSlider = document.getElementById('FadeSpeedSlider');
+			
+			function updateURL() {
+				// Prepare string with config data
+				var builtStr = "#";
+				var currentIdx = 1;
+				
+				// Line 0: Compatibility Version
+				builtStr += "v0.2&";
+				
+				// Line 1: Number of channels
+				builtStr += synthLinks.length + '&';
+				
+				// Line 2: Sync?
+				builtStr += syncCheckBox.checked + '&';
+				
+				// Line 3: Fade slider value
+				builtStr += fadeSlider.value + '&';
+				
+				// Lines 4-?: Part data
+				// +0: Beepbox link
+				// +1: Name Length
+				// +2: Name
+				// +3: Volume
+				// +4: Pan
+				synthLinks.forEach( function( link ) {
+					builtStr += link;
+					builtStr += '&';
+					
+					// Name needs to have length appended before to avoid other characters such as separators being misinterpreted. Also, string is truncated to 99 or less chars
+					var nameStr = partChooser.children[currentIdx].children[1].children[0].value.substring( 0, 99 );
+					// Get length into exactly two characters
+					if ( nameStr.length == 0 ) builtStr += '0';
+					if ( nameStr.length < 10 ) builtStr += '0';
+					builtStr += "" + nameStr.length;
+					builtStr += '&';
+					// Add actual name after
+					builtStr += nameStr;
+					builtStr += '&';
+					
+					builtStr += partChooser.children[currentIdx].children[2].children[0].value;
+					builtStr += '&';
+					builtStr += partChooser.children[currentIdx].children[3].children[0].value;
+					builtStr += '&';
+					
+					currentIdx++;
+					
+				});
+				
+			
+				// Pass data to window history to update URL
+				window.history.pushState({}, "", window.location.pathname + builtStr);
+					
+			}
+			
+			function handleSyncChange() {
+				
+				// The change is all well and good, but momentarily need to use the alternative interface to stop the song!
+				syncCheckBox.checked = 1 - syncCheckBox.checked;
+				
+					if ( playing )
+						playSong();
+						
+				syncCheckBox.checked = 1 - syncCheckBox.checked;
+				
+				// Now update how the audio processing is handled.
+				
+				if ( syncCheckBox.checked ) {
+				
+					for ( var i = 0; i < numParts; i++ ) {
+					
+						// Force first part to use custom audio processing event
+						if ( i == 0 )
+							synthParts[ i ].onaudioprocess = customAudioProcessCallbackSynced;
+						else {
+							// Don't self-process. Instead, add a channel to the first synth.
+							synthParts[ i ].onaudioprocess = null;					
+						}
+						
+					}
+				
+				}
+				else {
+				
+					for ( var i = 0; i < numParts; i++ ) {
+				
+						synthParts[ i ].onaudioprocess = synthParts[ i ].audioProcessCallback;
+					
+					}
+				
+				}
+				
+				synthParts.forEach( function( part ) {
+					part.snapToStart();
+				});
+				
+				// Log change in sync setting
+				updateURL();
+				
+			}
+			
+			function customPauseUnsynced( part, index ) {
+			
+				// Slightly modified version of the beepbox synth's pause function,
+				// which changes where the audio flow is disconnected to match the different audio context architecture.
+				if ( numParts == 0 )
+					return;
+				
+				if (part.paused)
+					return;
+					
+				part.paused = true;
+				part.scriptNode.disconnect( panList[ index ] );
+				if (part.audioCtx.close) {
+					part.audioCtx.close(); // firefox is missing this function?
+					part.audioCtx = null;
+				}
+				part.scriptNode = null;
+				
+			}
+			
+			function customPauseSynced() {
+				// Slightly modified version of the beepbox synth's pause function,
+				// which changes where the audio flow is disconnected to match the different multi-channel architecture.
+				if ( numParts == 0 )
+					return;
+				
+				if (synthParts[ 0 ].paused)
+					return;
+					
+				synthParts[ 0 ].paused = true;
+				synthParts[ 0 ].scriptNode.disconnect(synthParts[ 0 ].splitter);
+				if (synthParts[ 0 ].audioCtx.close) {
+					synthParts[ 0 ].audioCtx.close(); // firefox is missing this function?
+					synthParts[ 0 ].audioCtx = null;
+				}
+				synthParts[ 0 ].scriptNode = null;
+
+			}
+			
+			function customPlayUnsynced( part, index ) {
+				// Slightly modified version of the beepbox synth's play function, which does preprocessing and panning
+			
+				if ( numParts == 0 )
+					return;
+			
+				if (!part.paused)
+					return;
+					
+				part.paused = false;
+				
+				//Synth.warmUpSynthesizer(part.song);
+				
+				const contextClass = (window.AudioContext || window.webkitAudioContext || window.mozAudioContext || window.oAudioContext || window.msAudioContext);
+				part.audioCtx = new contextClass();
+						
+				part.scriptNode = part.audioCtx.createScriptProcessor ? part.audioCtx.createScriptProcessor(2048, 0, numParts+1) : part.audioCtx.createJavaScriptNode(2048, 0, numParts+1); // 2048, 0 input channels, ? outputs
+				part.scriptNode.onaudioprocess = part.audioProcessCallback;
+				part.scriptNode.channelCountMode = 'explicit';
+				part.scriptNode.channelInterpretation = 'speakers';
+				
+				// Set up panner for this channel
+				
+				panList[ index ] = part.audioCtx.createStereoPanner();
+				panList[ index ].pan = panValues[ index ];
+				
+				// Connection:
+				// scriptNode -- panner -- destination
+				
+				part.scriptNode.connect( panList[ index ] );
+				panList[ index ].connect( part.audioCtx.destination );
+								
+				part.samplesPerSecond = part.audioCtx.sampleRate;
+				part.effectAngle = Math.PI * 2.0 / (part.effectDuration * part.samplesPerSecond);
+				part.effectYMult = 2.0 * Math.cos(part.effectAngle);
+				part.limitDecay = 1.0 / (2.0 * part.samplesPerSecond);
+			}
+			
+			function customPlaySynced() {
+				// Slightly modified version of the beepbox synth's play function, which adds a channel for each part in the fader and does panning
+			
+				if ( numParts == 0 )
+					return;
+			
+				if (!synthParts[ 0 ].paused)
+					return;
+					
+				synthParts[ 0 ].paused = false;
+				
+				//Synth.warmUpSynthesizer(synthParts[ 0 ].song);
+				
+				const contextClass = (window.AudioContext || window.webkitAudioContext || window.mozAudioContext || window.oAudioContext || window.msAudioContext);
+				synthParts[ 0 ].audioCtx = new contextClass();
+						
+				synthParts[ 0 ].scriptNode = synthParts[ 0 ].audioCtx.createScriptProcessor ? synthParts[ 0 ].audioCtx.createScriptProcessor(2048, 0, numParts+1) : synthParts[ 0 ].audioCtx.createJavaScriptNode(2048, 0, numParts+1); // 2048, 0 input channels, ? outputs
+				synthParts[ 0 ].scriptNode.onaudioprocess = customAudioProcessCallbackSynced;
+				synthParts[ 0 ].scriptNode.channelCountMode = 'explicit';
+				synthParts[ 0 ].scriptNode.channelInterpretation = 'speakers';
+				
+				// Set up splitter and panners for all channels
+				var splitter = synthParts[ 0 ].audioCtx.createChannelSplitter( numParts+1 );
+				
+				for ( var i = 0; i < numParts; i++ ) {
+				
+					panList[ i ] = synthParts[ 0 ].audioCtx.createStereoPanner();
+					panList[ i ].pan = panValues[ i ];
+					
+				}
+				
+				// Connection:
+				// scriptNode -- splitter -+-- panner1 --+- destination
+				//                         \-- panner. --/
+				//						   \-- pannerN --/
+				
+				synthParts[ 0 ].scriptNode.connect(splitter);
+				
+				for ( var i = 0; i < numParts; i++ ) {
+				
+					splitter.connect( panList[ i ], i);
+					panList[ i ].connect( synthParts[ 0 ].audioCtx.destination );
+				
+				}
+								
+				// synthParts[ 0 ].scriptNode.connect(synthParts[ 0 ].audioCtx.destination);
+				
+				synthParts[ 0 ].samplesPerSecond = synthParts[ 0 ].audioCtx.sampleRate;
+				synthParts[ 0 ].effectAngle = Math.PI * 2.0 / (synthParts[ 0 ].effectDuration * synthParts[ 0 ].samplesPerSecond);
+				synthParts[ 0 ].effectYMult = 2.0 * Math.cos(synthParts[ 0 ].effectAngle);
+				synthParts[ 0 ].limitDecay = 1.0 / (2.0 * synthParts[ 0 ].samplesPerSecond);
+			}
+			
+			function songLinkCheck( linkBox ) {
+				if ( linkBox.value == "" ) {
+					document.getElementById('AddButton').disabled = true;
+				}
+				else
+					document.getElementById('AddButton').disabled = false;
+			}
+			
+			// Synchronize parts every 2ms
+			setInterval( function() {
+				
+				if ( synthParts[0] == null || synthParts[0] == 0 )
+					return;
+			
+				// Update bar display
+				if ( syncCheckBox.checked == false ) {
+					barIndicator.innerHTML = '--';
+				} else {
+					barIndicator.innerHTML = synthParts[ 0 ].bar;
+				}
+				
+				/*
+				synthParts.forEach( function( part ) {
+				
+					if ( part != synthParts[ 0 ] ) {
+						
+						part.bar = synthParts[ 0 ].bar;
+						part.beat = synthParts[ 0 ].beat;
+						part.part = synthParts[ 0 ].part;
+						part.arpeggio = synthParts[ 0 ].arpeggio;
+						part.arpeggioSampleCountdown = synthParts[ 0 ].arpeggioSampleCountdown;
+						part.effectPhase = synthParts[ 0 ].effectPhase;
+					
+					}
+				});
+				*/
+			
+			}, 2 );
+			
+			function fadeToPart( fadeButton ) {
+			
+				// Stop fading anything else
+				if ( fadeController != null ) {
+					clearInterval( fadeController );
+					fadeController = null;
+				}
+				
+				fadePart = parseInt( fadeButton.parentElement.children[0].textContent ) - 1;
+				fadeTimer = 0;
+				
+				// Get starting values of all volume sliders
+				for( var currRowIdx = 1; currRowIdx < partChooser.childElementCount; currRowIdx++ ) {
+
+					fadeVolumeStarts[ currRowIdx-1 ] = parseInt( partChooser.children[ currRowIdx ].children[ 2 ].children[ 0 ].value );
+				}
+			
+				// Handle fading at 20ms interval
+				fadeController = setInterval( function() {
+				
+					// Scale controls how song volumes are decreased
+					var fadeScaleFast = Math.pow( fadeTimer / 100, 0.3 ) * 100;
+					var fadeScaleSlow = Math.pow( fadeTimer / 100, 2 ) * 100;
+				
+					// Slide all other channels' volume to 0, fade up chosen channel to 100
+					for( var currRowIdx = 1; currRowIdx < partChooser.childElementCount; currRowIdx++ ) {
+						
+						if ( currRowIdx-1 == fadePart ) {
+							// Fade from start volume to 100
+							partChooser.children[ currRowIdx ].children[ 2 ].children[ 0 ].value = fadeVolumeStarts[ currRowIdx-1 ] + fadeScaleFast * ( 100.0 - fadeVolumeStarts[ currRowIdx-1 ] ) / ( 100.0 );
+							controlVolume( partChooser.children[ currRowIdx ].children[ 2 ].children[ 0 ] );
+						}
+						else {
+							// Fade from start volume to 0
+							partChooser.children[ currRowIdx ].children[ 2 ].children[ 0 ].value = ( 100.0 - fadeScaleSlow ) * fadeVolumeStarts[ currRowIdx - 1 ] / ( 100.0 );
+							controlVolume( partChooser.children[ currRowIdx ].children[ 2 ].children[ 0 ] );
+						}
+	
+					};
+					
+					// Increment fade timer by time elapsed since last call, which is based on fade slider. This function is called every 20ms, so that's the baseline.
+					fadeTimer += Math.pow( fadeSlider.value / 2, 2 ) / 20;
+					
+					if ( fadeTimer > 100 ) {
+						
+						clearInterval( fadeController );
+						fadeController = null;
+						
+						// Reflect volume changes in URL, but for performance reasons only do this when all the fading's done.
+						updateURL();
+					}
+				
+				}, 20 );
+			}
+			
+			function resetSong() {
+			
+				if ( syncCheckBox.checked ) {
+				
+					if ( numParts > 0 ) {
+				
+					customPauseSynced();
+					synthParts[ 0 ].snapToStart();
+				
+					}
+				}
+				else {
+					for ( var i = 0; i < numParts; i++ ) {
+						customPauseUnsynced( synthParts[ i ], i );
+						synthParts[ i ].snapToStart();
+					}
+				}
+				if ( playing ) {
+					if ( syncCheckBox.checked )
+						customPlaySynced();
+					else
+						for ( var i = 0; i < numParts; i++ ) {
+							customPlayUnsynced( synthParts[ i ], i );
+						}
+						
+					// Propagate volume/pan changes to nodes
+					for ( var i = 0; i < numParts; i++ ) {
+						controlVolume( partChooser.children[ i + 1 ].children[ 2 ].children[ 0 ] );
+						controlPan( partChooser.children[ i + 1 ].children[ 3 ].children[ 0 ] );
+					}
+					
+				}
+			}
+			
+			function forwardPattern() {
+				synthParts.forEach( function( part ) {
+					part.nextBar();
+				});
+			}
+			
+			function backPattern() {
+				synthParts.forEach( function( part ) {
+					part.prevBar();
+				});
+			}
+			
+			function resetEverything() {
+			
+				// Delete all channel data
+				if ( playing )
+					playSong();
+				
+				while ( synthParts.length > 0 ) {
+					
+					synthLinks.pop();
+					synthParts.pop();
+					panValues.pop();
+					panList.pop();
+				}
+				
+				// Remove all but the legend row
+				while ( partChooser.childElementCount > 1 ) {
+					partChooser.removeChild( partChooser.children[ 1 ] );
+				}
+				
+				numParts = 0;
+				
+				// Init options
+				syncCheckBox.checked = true;
+				fadeSlider.value = 8;
+				
+				// Update to blank URL
+				updateURL();
+			}
+
+			function loadConfig() {
+			
+				var fromStr = window.location.href.substring( window.location.href.indexOf("#") + 1 );
+				
+				// Line 0: Compatibility version. Currently only accepts v0.2.
+				// Later, parsing will need to be done based on this value!
+				if ( fromStr.substring( 0, fromStr.indexOf('&') ) != 'v0.2' ) {
+					return;
+				}
+				fromStr = fromStr.substring( fromStr.indexOf('&') + 1 );
+				
+				// Line 1: Number of channels
+				var tempLength = parseInt( fromStr.substring( 0, fromStr.indexOf('&') ) );
+				fromStr = fromStr.substring( fromStr.indexOf('&') + 1 );
+				
+				// Line 2: Sync?
+				var tempChecked = ( fromStr.substring( 0, fromStr.indexOf('&') ) == "true" ) ? 1 : 0;
+				fromStr = fromStr.substring( fromStr.indexOf('&') + 1 );
+				
+				SyncCheckBox.checked = tempChecked;
+				
+				// Line 3: Fade Slider value
+				var tempFade = fromStr.substring( 0, fromStr.indexOf('&') );
+				fromStr = fromStr.substring( fromStr.indexOf('&') + 1 );
+				
+				fadeSlider.value = tempFade;
+				
+				// Lines 4-?: Part data
+				// +0: Beepbox link
+				// +1: Name Length
+				// +2: Name
+				// +3: Volume
+				// +4: Pan
+				for ( var i = 0; i < tempLength; i++ ) {
+					var tempDocLink = fromStr.substring( 0, fromStr.indexOf('&') );
+					fromStr = fromStr.substring( fromStr.indexOf('&') + 1 );
+					
+					var tempItemNameLength = parseInt( fromStr.substring( 0, fromStr.indexOf('&') ) );
+					fromStr = fromStr.substring( fromStr.indexOf('&') + 1 );
+					
+					var tempItemName = fromStr.substring( 0, tempItemNameLength );
+					fromStr = fromStr.substring( tempItemNameLength + 1 );
+					
+					var tempVolume = parseInt( fromStr.substring( 0, fromStr.indexOf('&') ) );
+					fromStr = fromStr.substring( fromStr.indexOf('&') + 1 );
+					
+					var tempPan = parseInt( fromStr.substring( 0, fromStr.indexOf('&') ) );
+					fromStr = fromStr.substring( fromStr.indexOf('&') + 1 );
+					
+					document.getElementById('SongLinkBox').value = tempDocLink;
+					
+					addPart();
+					
+					// Set name, volume, and pan
+					partChooser.children[ numParts ].children[ 1 ].children[ 0 ].value = tempItemName;
+					partChooser.children[ numParts ].children[ 2 ].children[ 0 ].value = tempVolume;
+					partChooser.children[ numParts ].children[ 3 ].children[ 0 ].value = tempPan;
+					
+					// Once loaded, URL needs to be uploaded
+					updateURL();
+				}
+			}
+			
+			function customAudioProcessCallbackSynced( audioProcessingEvent ) {
+				// First synth - process audio for all synths!
+			
+				const outputBuffer = audioProcessingEvent.outputBuffer;
+				
+				for ( var i = 0; i < numParts; i++ ) {
+				
+					// Sync up with main, maybe. Either way, each part writes to one channel.
+					if ( syncCheckBox.checked ) {
+						synthParts[ i ].bar = synthParts[ 0 ].bar;
+						synthParts[ i ].beat = synthParts[ 0 ].beat;
+						synthParts[ i ].part = synthParts[ 0 ].part;
+						synthParts[ i ].arpeggio = synthParts[ 0 ].arpeggio;
+						synthParts[ i ].arpeggioSampleCountdown = synthParts[ 0 ].arpeggioSampleCountdown;
+						synthParts[ i ].effectPhase = synthParts[ 0 ].effectPhase;
+					}
+					
+					synthParts[ i ].synthesize(outputBuffer.getChannelData( i ), outputBuffer.length);
+					
+				}
+			
+			}
+			
+			function addPart() {
+			
+				var stringForSong = document.getElementById('SongLinkBox').value;
+				
+				// Get just the beepbox data out of the string (past the '#')
+				stringForSong = stringForSong.substring( stringForSong.indexOf('#') + 1 );
+				
+				// Stop all parts
+				if ( playing )
+					playSong();
+				
+				// Reset all parts
+				resetSong();
+				
+				synthParts[ numParts ] = new beepbox.Synth( stringForSong );
+				synthLinks[ numParts ] = stringForSong;
+				panValues [ numParts ] = 50;
+				panList[ numParts ] = null;
+				
+				if ( syncCheckBox.checked == 1 ) {
+				
+				// Force first part to use custom audio processing event
+				if ( numParts == 0 )
+					synthParts[ numParts ].onaudioprocess = customAudioProcessCallbackSynced;
+				else {
+					// Don't self-process. Instead, add a channel to the first synth.
+					synthParts[ numParts ].onaudioprocess = null;					
+				}
+				
+				} else {
+				
+					for ( var i = 0; i < numParts; i++ ) {
+						synthParts[ i ].onaudioprocess = synthParts[ i ].audioProcessCallback;
+					}
+				
+				}
+				
+				numParts++;
+				
+				// Clear box for more inputs
+				document.getElementById('SongLinkBox').value = "";
+				document.getElementById('AddButton').disabled = true;
+				
+				// Add elements to this new row
+				var newRow = document.createElement('div');
+				newRow.style="clear:both";
+				
+					var newRowIndexDiv = document.createElement('div');
+					newRowIndexDiv.style="display:inline-block; width:1.5em";
+					newRowIndexDiv.innerHTML = '' + numParts;
+				
+					var newPartNameDiv = document.createElement('div');
+					newPartNameDiv.style="display:inline-block; width:200px";
+					
+						var partNameInputBox = document.createElement('input');
+						partNameInputBox.style = "color:white; background-color:black; border-color:#36af6b; border-style:solid";
+						partNameInputBox.onchange = function(){updateURL();};
+					
+					newPartNameDiv.appendChild(partNameInputBox);
+					
+					var newVolumeDiv = document.createElement('div');
+					newVolumeDiv.style = "display:inline-block; width:200px";
+					
+						var newVolumeSlider = document.createElement('input');
+						newVolumeSlider.type = "range";
+						newVolumeSlider.classList.add( "slider" );
+						newVolumeSlider.min = "0";
+						newVolumeSlider.max = "100";
+						newVolumeSlider.value = "0";
+						newVolumeSlider.style = "background:gray; vertical-align:middle; cursor:pointer";
+						newVolumeSlider.oninput = function(){controlVolume(this);};
+						newVolumeSlider.onchange = function(){updateURL();}; // For performance reasons, only 'change' method is when URL is updated.
+						
+						// Only first part added gets volume automatically
+						if ( numParts == 1 )
+							newVolumeSlider.value = "100";
+					
+					newVolumeDiv.appendChild( newVolumeSlider );
+					
+					var newPanDiv = document.createElement('div');
+					newPanDiv.style = "display:inline-block; width:200px";
+					
+						var newPanSlider = document.createElement('input');
+						newPanSlider.type = "range";
+						newPanSlider.classList.add( "slider" );
+						newPanSlider.min = "0";
+						newPanSlider.max = "100";
+						newPanSlider.value = "50";
+						newPanSlider.style = "background:gray; vertical-align:middle; cursor:pointer";
+						newPanSlider.oninput = function(){controlPan(this)};
+						newPanSlider.onchange = function(){updateURL();}; // For performance reasons, only 'change' method is when URL is updated.
+					
+					newPanDiv.appendChild( newPanSlider );
+					
+					var newFadeToThisButton = document.createElement('button');
+					newFadeToThisButton.innerHTML = "Fade to this";
+					newFadeToThisButton.classList.add( "button" );
+					newFadeToThisButton.onclick = function(){fadeToPart(this);};
+					newFadeToThisButton.disabled = true;
+					newFadeToThisButton.style = "margin-right:20px";
+					
+					var newCopyBeepboxLinkButton = document.createElement('button');
+					newCopyBeepboxLinkButton.classList.add( "button" );
+					newCopyBeepboxLinkButton.innerHTML = "Copy Beepbox Link";
+					newCopyBeepboxLinkButton.onclick = function(){copyBeepboxLink(this);};
+					newCopyBeepboxLinkButton.style = "margin-right:20px";
+					
+					var newRemoveThisButton = document.createElement('button');
+					newRemoveThisButton.innerHTML = "Remove";
+					newRemoveThisButton.classList.add( "button" );
+					newRemoveThisButton.onclick = function(){removePart(this);};
+
+				newRow.appendChild( newRowIndexDiv );
+				newRow.appendChild( newPartNameDiv );
+				newRow.appendChild( newVolumeDiv );
+				newRow.appendChild( newPanDiv );
+				newRow.appendChild( newFadeToThisButton );
+				newRow.appendChild( newCopyBeepboxLinkButton );
+				newRow.appendChild( newRemoveThisButton );
+				
+				partChooser.appendChild( newRow );
+				
+				
+				// Actually set volume/pan of new part
+				controlVolume( newVolumeSlider );
+				controlPan( newPanSlider );	
+
+				// Log new part
+				updateURL();
+		
+			}
+			
+			function copyBeepboxLink( copyButton ) {
+				var rowIdx = parseInt( copyButton.parentElement.children[0].innerHTML, 10 );
+				
+				navigator.clipboard.writeText( 'https://www.beepbox.co/#' + synthLinks[ rowIdx - 1 ] );
+			}
+			
+			function controlVolume( volumeBar ) {
+				var rowIdx = parseInt( volumeBar.parentElement.parentElement.children[0].innerHTML, 10 );
+				
+				// From beepbox's _calcVolume function.
+				var adjustedVolume = Math.min(1.0, Math.pow(volumeBar.value / 50.0, 0.5)) * Math.pow(2.0, (volumeBar.value - 75.0) / 25.0);
+				
+				synthParts[ rowIdx - 1 ].volume = adjustedVolume;
+				
+			}
+			
+			function controlPan( panBar ) {
+				var rowIdx = parseInt( panBar.parentElement.parentElement.children[0].innerHTML, 10 );
+				
+				// Map 0~100 to -1~1 range
+				panValues[ rowIdx - 1 ] = ( panBar.value / 50 ) - 1.0;
+				
+				if ( panList[ rowIdx - 1 ] != null && synthParts[ 0 ].audioCtx.currentTime != null )
+					panList[ rowIdx - 1 ].pan.setValueAtTime( panValues[ rowIdx - 1 ], synthParts[ 0 ].audioCtx.currentTime );
+			}
+			
+			function removePart( part ) {
+				
+							
+				// Remove id from list
+				
+				var myPartFound = false;
+				
+				part.parentElement.parentElement.removeChild( part.parentElement );
+				
+				var removeIdx = parseInt( part.parentElement.children[0].innerHTML, 10 );
+
+				if ( syncCheckBox.checked )
+					customPauseSynced();
+				
+				for( var currRowIdx = 1; currRowIdx <= partChooser.childElementCount; currRowIdx++ ) {
+					
+					var currRow = partChooser.childNodes[ currRowIdx ];
+					
+					if ( removeIdx <= currRowIdx ) {
+						
+						// Stop/remove the part
+						if ( removeIdx == currRowIdx ) {
+						
+							if ( syncCheckBox.checked == 0 )
+								customPauseUnsynced( synthParts[ currRowIdx-1 ], currRowIdx-1 );
+						
+						}
+					
+						synthParts[ currRowIdx-1 ] = synthParts[ currRowIdx ];
+						synthLinks[ currRowIdx-1 ] = synthLinks[ currRowIdx ];
+						panValues [ currRowIdx-1 ] = panValues[ currRowIdx ];
+						panList[ currRowIdx - 1 ] = panList[ currRowIdx - 1 ];
+						
+				
+						if ( currRow.children[0] != null )
+						currRow.children[0].innerHTML = '' + currRowIdx - 1;
+				
+					}
+					
+				}
+				
+				// Remove last, garbage element
+				synthParts.pop();
+				synthLinks.pop();
+				panValues.pop();
+				panList.pop();
+				
+				numParts--;
+				
+				// Log change in part count
+				updateURL();
+				
+			}
+			
+			function playSong() {
+			
+				playing = 1-playing;
+				
+				if ( playing == 1 ) {
+					
+					// Make 'Fade to this' button active for all parts
+					for ( var i = 1; i < partChooser.childElementCount; i++ ) {
+						partChooser.children[ i ].children[ 4 ].disabled = false;
+					}
+					
+				
+					document.getElementById('PlayButton').innerHTML = "Pause";
+				
+					// If synced: Play first ('leader') part, the rest will use its audio processing event.
+					if ( syncCheckBox.checked ) {
+					
+						customPlaySynced();
+					
+					} else {					
+						// Otherwise, play everything.
+						for ( var i = 0; i < numParts; i++ ) {
+							customPlayUnsynced( synthParts[ i ], i );
+						}
+					}
+					
+					// Propagate volume/pan changes to nodes
+					for ( var i = 0; i < numParts; i++ ) {
+						controlVolume( partChooser.children[ i + 1 ].children[ 2 ].children[ 0 ] );
+						controlPan( partChooser.children[ i + 1 ].children[ 3 ].children[ 0 ] );
+					}
+				}
+				else {
+					// Make 'Fade to this' button inactive for all parts
+					for ( var i = 1; i < partChooser.childElementCount; i++ ) {
+						partChooser.children[ i ].children[ 4 ].disabled = true;
+					}
+				
+					document.getElementById('PlayButton').innerHTML = "Play";
+				
+					if ( syncCheckBox.checked ) {
+						customPauseSynced();
+					}
+					else {
+						for ( var i = 0; i < numParts; i++ ) {
+							customPauseUnsynced( synthParts[ i ], i );
+						}
+					}
+				}
+			}
+			
+		</script>
+	</body>
+</html>
